@@ -9,10 +9,18 @@ public abstract class DriveExporter
 
     protected abstract IFileSaver CreateSaver();
 
-    // TODO
-    public Task<bool> ExportAsync(string content, string fileName)
+    public async Task<bool> ExportAsync(string content, string fileName)
     {
-        return new Task<bool>(() => false);
+        string localTempPath = Path.Combine(FileSystem.CacheDirectory, fileName);
+        var saver = CreateSaver();
+
+        if (saver.Save(content, localTempPath))
+        {
+            string id = await _driveApi.UploadFileAsync(localTempPath);
+            Logger.GetInstance().Log(LogType.SAVE, $"Збережено відфільтрований фрагмент у файл {fileName} на Drive");
+            return !string.IsNullOrEmpty(id);
+        }
+        return false;
     }
 }
 

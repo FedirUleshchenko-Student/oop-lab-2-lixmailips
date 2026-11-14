@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="liXMaiLips.Pages.MainPage"
+             Title="liXMaiLips">
+
+    <Grid ColumnDefinitions="320, *" ColumnSpacing="15" Padding="15">
+
+        <!-- ================================================= -->
+        <!-- LEFT COLUMN: CONTROLS AND LOGGER                  -->
+        <!-- ================================================= -->
+        <Grid Grid.Column="0" RowDefinitions="Auto, Auto, Auto, *" RowSpacing="6">
+
+            <!-- Block 1: XML and File -->
+            <VerticalStackLayout Grid.Row="0" Spacing="4" BackgroundColor="{AppThemeBinding Light='#F8F9FA', Dark='#212529'}" Padding="6">
+                <Button x:Name="BtnChooseXml" Text="Обрати XML" Clicked="OnChooseXmlClicked" HeightRequest="36" />
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="5">
+                    <Button Grid.Column="0" Text="Обрати translate" Clicked="OnChooseTranslateClicked" HeightRequest="36" />
+                    <Button Grid.Column="1" Text="Auto" Clicked="OnAutoTranslateClicked" WidthRequest="60" HeightRequest="36" />
+                </Grid>
+                <Label x:Name="LblFileInfo" Text="Короткий опис файлу: не обрано" FontSize="11" TextColor="Gray" />
+                <Button x:Name="BtnCloseFile" Text="Закрити файл (очистити)" Clicked="OnCloseFileClicked" HeightRequest="36" BackgroundColor="{AppThemeBinding Light='#FFE3E3', Dark='#4A2C2C'}" TextColor="{AppThemeBinding Light='#C92A2A', Dark='#FFA8A8'}" />
+            </VerticalStackLayout>
+
+            <!-- Block 2: XSL and Transformation -->
+            <VerticalStackLayout Grid.Row="1" Spacing="4" BackgroundColor="{AppThemeBinding Light='#F8F9FA', Dark='#212529'}" Padding="6">
+                <Button x:Name="BtnChooseXsl" Text="Обрати XSL" Clicked="OnChooseXslClicked" HeightRequest="36" />
+                <Button x:Name="BtnTransformHtml" Text="Трансформувати в HTML" Clicked="OnTransformHtmlClicked" HeightRequest="36" />
+                <Button x:Name="BtnSaveXml" Text="Зберегти XML файл" Clicked="OnSaveXmlClicked" HeightRequest="36" />
+                <Button x:Name="BtnClearXslParams" Text="Очистити XSL параметри" Clicked="OnClearXslParamsClicked" HeightRequest="36" BackgroundColor="{AppThemeBinding Light='#FFE3E3', Dark='#4A2C2C'}" TextColor="{AppThemeBinding Light='#C92A2A', Dark='#FFA8A8'}" />
+            </VerticalStackLayout>
+
+            <!-- Block 3: Strategy and Reset -->
+            <VerticalStackLayout Grid.Row="2" Spacing="4" BackgroundColor="{AppThemeBinding Light='#F8F9FA', Dark='#212529'}" Padding="6">
+                <Label Text="Тип стратегії:" FontSize="11" />
+                <Picker x:Name="StrategyPicker" Title="Оберіть стратегію (SAX / DOM / LINQ)" HeightRequest="36">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>LINQ to XML</x:String>
+                            <x:String>DOM API</x:String>
+                            <x:String>SAX API</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+                <Button x:Name="BtnResetAll" Text="Скинути всі параметри" Clicked="OnResetAllClicked" HeightRequest="36" BackgroundColor="{AppThemeBinding Light='#FFE3E3', Dark='#4A2C2C'}" TextColor="{AppThemeBinding Light='#C92A2A', Dark='#FFA8A8'}" />
+            </VerticalStackLayout>
+
+            <!-- Block 5: Logger (Bottom-left, single scroll via CollectionView on visible background) -->
+            <Grid Grid.Row="3" RowDefinitions="Auto, *" Margin="0,5,0,0">
+                <Label Grid.Row="0" Text="Лог подій (історія):" FontAttributes="Bold" FontSize="11" Margin="0,0,0,4" />
+                <CollectionView Grid.Row="1" x:Name="LogCollectionView" ItemsSource="{Binding LogEntries}" SelectionMode="None"
+                                BackgroundColor="{AppThemeBinding Light='#F1F3F5', Dark='#1A1D20'}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border StrokeThickness="1" Stroke="#DEE2E6" Padding="6" Margin="3" BackgroundColor="{AppThemeBinding Light='White', Dark='#2C3034'}">
+                                <Label Text="{Binding}" FontSize="11" />
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+
+        </Grid>
+
+        <!-- ================================================= -->
+        <!-- RIGHT COLUMN: PARAMETERS, DETAILS, RESULTS LIST   -->
+        <!-- ================================================= -->
+        <Grid Grid.Column="1" RowDefinitions="Auto, Auto, *" RowSpacing="12">
+
+            <!-- Zone 1: Search parameters (Green container with scroll for values + fixed red sub-square at the bottom) -->
+            <Border Grid.Row="0" StrokeThickness="1.5" Stroke="#2B8A3E" Padding="8" BackgroundColor="{AppThemeBinding Light='#F8F9FA', Dark='#212529'}">
+                <Grid RowDefinitions="*, Auto" RowSpacing="8">
+
+                    <!-- Scroll for parameters list (Blue blocks) -->
+                    <ScrollView Grid.Row="0" MaximumHeightRequest="200">
+                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding ParametersList}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Border StrokeThickness="1.5" Stroke="#3B5BDB" Padding="8" Margin="0,0,0,5" BackgroundColor="{AppThemeBinding Light='White', Dark='#2C3034'}">
+                                        <VerticalStackLayout Spacing="6">
+                                            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                                                <!-- Orange marker / parameter name -->
+                                                <Label Text="{Binding Name}" FontAttributes="Bold" VerticalOptions="Center" TextColor="{AppThemeBinding Light='#D9480F', Dark='#FF8787'}" />
+
+                                                <!-- Button to toggle input field for adding a new value -->
+                                                <Button Grid.Column="1" Text="+ Значення" FontSize="11" HeightRequest="30" Padding="8,0" Clicked="OnToggleAddValueClicked" CommandParameter="{Binding}" />
+                                            </Grid>
+
+                                            <!-- Yellow zone: values with tags and cross buttons -->
+                                            <FlexLayout Wrap="Wrap" AlignItems="Center" JustifyContent="Start" BindableLayout.ItemsSource="{Binding Values}">
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <HorizontalStackLayout Spacing="4" Margin="3" BackgroundColor="{AppThemeBinding Light='#FFF9DB', Dark='#3B371E'}" Padding="6,3">
+                                                            <Label Text="{Binding}" VerticalOptions="Center" FontSize="13" />
+                                                            <Button Text="✕" FontSize="10" WidthRequest="24" HeightRequest="24" Padding="0" Clicked="OnRemoveParamValueClicked" CommandParameter="{Binding}" />
+                                                        </HorizontalStackLayout>
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+                                            </FlexLayout>
+
+                                            <!-- Input field and save button for new value (appear only when needed) -->
+                                            <StackLayout IsVisible="{Binding IsAddingValue}" Spacing="5" Margin="0,5,0,0">
+                                                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="5">
+                                                    <Entry Grid.Column="0" Text="{Binding NewValueInput}" Placeholder="Введіть нове значення..." HeightRequest="36" FontSize="13" />
+                                                    <Button Grid.Column="1" Text="Зберегти" Clicked="OnSaveNewValueClicked" CommandParameter="{Binding}" HeightRequest="36" FontSize="12" />
+                                                </Grid>
+                                            </StackLayout>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </ScrollView>
+
+                    <!-- Red sub-square: add a new parameter (argument) via dropdown from file -->
+                    <Button Grid.Row="1" Text="+ Додати параметр (з файлу)" Clicked="OnAddParameterClicked" HeightRequest="38" 
+                            BackgroundColor="{AppThemeBinding Light='#FFE3E3', Dark='#4A2C2C'}" 
+                            TextColor="{AppThemeBinding Light='#C92A2A', Dark='#FFA8A8'}" 
+                            FontAttributes="Bold" />
+
+                </Grid>
+            </Border>
+
+            <!-- Zone 2: Selected result (Detailed description) -->
+            <Border Grid.Row="1" StrokeThickness="1" Stroke="#3B5bdb" Padding="12" BackgroundColor="{AppThemeBinding Light='White', Dark='#2C3034'}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="ОБРАНИЙ РЕЗУЛЬТАТ ІЗ СПИСКУ НИЖЧЕ" FontAttributes="Bold" FontSize="12" TextColor="#3B5BDB" />
+                    <Label x:Name="LblSelectedDetails" Text="Тут вказана детальна інформація про нього, у форматі тому ж, що і вікно параметрів (тільки значення 1, а не багато)." FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Zone 3: Results list (Green container with scroll and blue cards) -->
+            <ScrollView Grid.Row="2">
+                <VerticalStackLayout Spacing="10" Padding="5" x:Name="ResultsListLayout" BackgroundColor="{AppThemeBinding Light='#F8F9FA', Dark='#212529'}">
+
+                    <!-- Example result card (Blue square) -->
+                    <Border StrokeThickness="1.5" Stroke="#3B5BDB" Padding="12" BackgroundColor="{AppThemeBinding Light='White', Dark='#2C3034'}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Наступний результат (ID: 001)" FontAttributes="Bold" TextColor="#3B5BDB" />
+                            <Label Text="Короткий опис даних: ФІОТ | Кафедра ЗІ | Іванов І.І." FontSize="12" TextColor="Gray" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border StrokeThickness="1.5" Stroke="#3B5BDB" Padding="12" BackgroundColor="{AppThemeBinding Light='White', Dark='#2C3034'}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Наступний результат (ID: 002)" FontAttributes="Bold" TextColor="#3B5BDB" />
+                            <Label Text="Короткий опис даних: ФПМ | Кафедра ПМ | Петров П.П." FontSize="12" TextColor="Gray" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+        </Grid>
+
+    </Grid>
+</ContentPage>

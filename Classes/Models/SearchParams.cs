@@ -14,6 +14,9 @@ public class SearchParams
     public List<string> EducationType = new();
     public List<string> Insitution = new();
 
+    // TEMP no
+    //public List<string> Dates = new();
+
     public bool IsEmpty() =>
            !FullName.Any()
         && !Faculty.Any()
@@ -21,4 +24,18 @@ public class SearchParams
         && !EducationType.Any()
         && !Insitution.Any()
         ;
+
+    public override string ToString()
+    {
+        return
+            (FullName.Count == 0 ? "" : $"Імена = [ {FullName} ];")
+            +
+            (Faculty.Count == 0 ? "" : $"Факультети = [ {Faculty} ];")
+            +
+            (Department.Count == 0 ? "" : $"Факультети = [ {Department} ];")
+            +
+            (EducationType.Count == 0 ? "" : $"Тип освіти = [ {EducationType} ];")
+            +
+            (Insitution.Count == 0 ? "" : $"Університети = [ {Insitution} ];");
+    }
 }
