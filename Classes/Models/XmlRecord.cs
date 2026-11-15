@@ -2,7 +2,7 @@
 
 public record XmlRecord
 {
-    public Dictionary<string, string> Fields = new(StringComparer.OrdinalIgnoreCase);
+    public required Dictionary<string, string> Fields { get; init; }
 
     // Operator []
     public string this[string key] => Fields.TryGetValue(key, out var val) ? val : string.Empty;

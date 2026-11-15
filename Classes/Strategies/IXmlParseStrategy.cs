@@ -4,5 +4,5 @@ namespace liXMaiLips.Strategies;
 
 public interface IXmlParseStrategy
 {
-    List<StaffMember> Search(string xmlContent, SearchParams parameters);
+    List<XmlRecord> Search(string xmlContent, DynamicSearchParams parameters);
 }

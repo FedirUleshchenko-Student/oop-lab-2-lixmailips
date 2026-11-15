@@ -4,9 +4,9 @@ namespace liXMaiLips.Strategies;
 
 public class SaxParseStrategy : IXmlParseStrategy
 {
-    public List<StaffMember> Search(string xmlContent, SearchParams parameters)
+    public List<XmlRecord> Search(string xmlContent, DynamicSearchParams parameters)
     {
         // placeholder
-        return new List<StaffMember> { new StaffMember { FullName = "Іванов І.І.", Faculty = "ФКНК" } };
+        return new List<XmlRecord>();
     }
 }

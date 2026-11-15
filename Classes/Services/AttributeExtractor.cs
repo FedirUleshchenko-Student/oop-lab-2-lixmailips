@@ -17,7 +17,7 @@ namespace liXMaiLips.Services
             {
                 XDocument doc = XDocument.Parse(xmlContent);
 
-                foreach (var element in doc.Descendants().Descendants())
+                foreach (var element in doc.Elements())
                 {
                     foreach (var attr in element.Descendants())
                     {

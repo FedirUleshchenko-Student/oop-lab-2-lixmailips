@@ -5,10 +5,20 @@ public class XmlSearchContext
 {
     private IXmlParseStrategy? _strategy;
 
-    public void SetStrategy(IXmlParseStrategy strategy) => _strategy = strategy;
-
-    public List<StaffMember> ExecuteSearch(string xmlContent, SearchParams parameters)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="strategy"></param>
+    /// <returns>true - if setted NEW strategy, false - something went wrong or == to old</returns>
+    public bool SetStrategy(IXmlParseStrategy strategy)
     {
-        return _strategy?.Search(xmlContent, parameters) ?? new List<StaffMember>();
+        bool answer = _strategy?.GetType() == strategy.GetType();
+        _strategy = strategy;
+        return answer;
+    }
+
+    public List<XmlRecord> ExecuteSearch(string xmlContent, DynamicSearchParams parameters)
+    {
+        return _strategy?.Search(xmlContent, parameters) ?? new List<XmlRecord>();
     }
 }

@@ -15,9 +15,11 @@ public class GoogleDriveService : IGoogleDriveAPI
         return new Task<Dictionary<string, string>>(() => new Dictionary<string, string>());
     }
 
-    public Task<bool> DownloadFileAsync(string fileId, string targetPath)
+    public Task<Stream?> DownloadFileAsync(string fileId)
     {
-        return new Task<bool>(() => false);
+        // TODO: Download file into a MemoryStream and reset stream.Position = 0 before returning
+        //return Task.FromResult<Stream?>(null);
+        return new Task<Stream?>(() => null);
     }
 
     public Task<string> UploadFileAsync(string filePath)
