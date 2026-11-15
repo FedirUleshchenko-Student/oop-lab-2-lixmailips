@@ -4,8 +4,8 @@ using liXMaiLips.Utils;
 
 public abstract class DriveExporter
 {
-    protected GoogleDriveAPI _driveApi;
-    public DriveExporter(GoogleDriveAPI driveApi) { _driveApi = driveApi; }
+    protected GoogleDriveService _driveApi;
+    public DriveExporter(GoogleDriveService driveApi) { _driveApi = driveApi; }
 
     protected abstract IFileSaver CreateSaver();
 
@@ -26,12 +26,12 @@ public abstract class DriveExporter
 
 public class XmlDriveExporter : DriveExporter
 {
-    public XmlDriveExporter(GoogleDriveAPI driveApi) : base(driveApi) { }
+    public XmlDriveExporter(GoogleDriveService driveApi) : base(driveApi) { }
     protected override IFileSaver CreateSaver() => new XmlFileSaver();
 }
 
 public class HtmlDriveExporter : DriveExporter
 {
-    public HtmlDriveExporter(GoogleDriveAPI driveApi) : base(driveApi) { }
+    public HtmlDriveExporter(GoogleDriveService driveApi) : base(driveApi) { }
     protected override IFileSaver CreateSaver() => new HtmlFileSaver();
 }
