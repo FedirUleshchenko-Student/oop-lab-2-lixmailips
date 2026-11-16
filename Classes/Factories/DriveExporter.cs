@@ -14,13 +14,31 @@ public abstract class DriveExporter
         string localTempPath = Path.Combine(FileSystem.CacheDirectory, fileName);
         var saver = CreateSaver();
 
-        if (saver.Save(content, localTempPath))
+        try
         {
-            string id = await _driveApi.UploadFileAsync(localTempPath);
-            Logger.GetInstance().Log(LogType.SAVE, $"Збережено відфільтрований фрагмент у файл {fileName} на Drive");
-            return !string.IsNullOrEmpty(id);
+            if (saver.Save(content, localTempPath))
+            {
+                string id = await _driveApi.UploadFileAsync(localTempPath);
+                if (!string.IsNullOrEmpty(id))
+                {
+                    Logger.GetInstance().Log(LogType.SAVE, $"Збережено файл {fileName} на Google Drive");
+                    return true;
+                }
+            }
+            return false;
         }
-        return false;
+        finally
+        {
+            try
+            {
+                if (File.Exists(localTempPath))
+                    File.Delete(localTempPath);
+            }
+            catch
+            {
+                // Ignore temporary file cleanup errors
+            }
+        }
     }
 }
 

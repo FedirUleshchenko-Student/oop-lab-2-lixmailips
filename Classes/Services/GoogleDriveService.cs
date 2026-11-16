@@ -7,23 +7,22 @@ public class GoogleDriveService : IGoogleDriveAPI
 
     public Task<bool> AuthenticateAsync()
     {
-        return new Task<bool>(() => false);
+        return Task.FromResult(false);
     }
 
     public Task<Dictionary<string, string>> GetAvailableFilesAsync(List<string> extensions)
     {
-        return new Task<Dictionary<string, string>>(() => new Dictionary<string, string>());
+        return Task.FromResult(new Dictionary<string, string>());
     }
 
     public Task<Stream?> DownloadFileAsync(string fileId)
     {
         // TODO: Download file into a MemoryStream and reset stream.Position = 0 before returning
-        //return Task.FromResult<Stream?>(null);
-        return new Task<Stream?>(() => null);
+        return Task.FromResult<Stream?>(null);
     }
 
     public Task<string> UploadFileAsync(string filePath)
     {
-        return new Task<string>(() => "");
+        return Task.FromResult("");
     }
 }

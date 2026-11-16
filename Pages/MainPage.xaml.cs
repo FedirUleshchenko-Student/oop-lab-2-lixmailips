@@ -98,6 +98,7 @@ public partial class MainPage : ContentPage
 
             LblSelectedDetails.Text = "Оберіть елемент зі списку нижче для детального перегляду.";
             LblFileInfo.Text = $"Файл: {fileName} (Атрибутів: {attrCount})";
+            UpdateFileInfoLabel();
             LogAction($"Loaded XML: {fileName} ({source})");
 
             // Run initial search without filters to display all records
@@ -123,6 +124,7 @@ public partial class MainPage : ContentPage
         {
             ParametersList.Clear();
             ResultsListLayout.Children.Clear();
+            UpdateFileInfoLabel();
             LblFileInfo.Text = "Короткий опис файлу: не обрано";
             LblSelectedDetails.Text = "Тут вказана детальна інформація про нього...";
             LogAction("Closed XML file and cleared workspace");
@@ -164,6 +166,7 @@ public partial class MainPage : ContentPage
         if (loaded)
         {
             string xslName = _controller.xslFile?.Properties?.Name ?? "template.xsl";
+            UpdateFileInfoLabel();
             LogAction($"Loaded XSL template: {xslName} ({source})");
             await DisplayAlert("XSL", "XSL шаблон успішно завантажено.", "ОК");
         }
@@ -241,6 +244,7 @@ public partial class MainPage : ContentPage
     {
         if (_controller.ClearXsl())
         {
+            UpdateFileInfoLabel();
             LogAction("Cleared XSL template");
         }
     }
@@ -474,5 +478,18 @@ public partial class MainPage : ContentPage
 
             ResultsListLayout.Children.Add(card);
         }
+    }
+
+    private void UpdateFileInfoLabel()
+    {
+        string xmlPart = _controller.xmlFile?.Properties?.Name != null
+            ? $"XML: {_controller.xmlFile.Properties.Value.Name} (Атрибутів: {_controller.CurrentAttributes?.Count ?? 0})"
+            : "XML: не обрано";
+
+        string xslPart = _controller.xslFile?.Properties?.Name != null
+            ? $"XSL: {_controller.xslFile.Properties.Value.Name}"
+            : "XSL: не обрано";
+
+        LblFileInfo.Text = $"{xmlPart} | {xslPart}";
     }
 }
