@@ -34,7 +34,7 @@ public class XmlContentSetUpper : BaseContentSetUpper
         return new XmlFileContent
         {
             Properties = properties,
-            ContentWithoutParams = content
+            Content = content
         };
     }
 }

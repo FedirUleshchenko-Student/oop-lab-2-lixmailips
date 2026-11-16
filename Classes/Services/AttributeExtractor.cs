@@ -1,59 +1,68 @@
 ﻿using System.Xml.Linq;
-using System.Text;
 
-namespace liXMaiLips.Services
+namespace liXMaiLips.Services;
+
+public class AttributeExtractor
 {
-    public class AttributeExtractor
+    // Attribute or leaf tag name -> sorted list of unique values
+    public Dictionary<string, List<string>>? ExtractUniqueAttributes(string xmlContent)
     {
-        // atribute name -> list of unique values
-        public Dictionary<string, List<string>>? ExtractUniqueAttributes(string xmlContent)
+        var attributesMap = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(xmlContent))
+            return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        try
         {
-            var attributesMap = new Dictionary<string, List<string>>();
+            XDocument doc = XDocument.Parse(xmlContent);
+            if (doc.Root == null)
+                return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-            if (string.IsNullOrWhiteSpace(xmlContent))
-                return attributesMap;
-
-            try
+            foreach (var element in doc.Root.Descendants())
             {
-                XDocument doc = XDocument.Parse(xmlContent);
-
-                foreach (var element in doc.Elements())
+                // 1. Extract XML attributes on the element (excluding xmlns declarations)
+                foreach (var attr in element.Attributes())
                 {
-                    foreach (var attr in element.Descendants())
-                    {
-                        string attrName = attr.Name.LocalName;
-                        string attrValue = attr.Value;
+                    if (attr.IsNamespaceDeclaration)
+                        continue;
 
-                        if (!attributesMap.ContainsKey(attrName))
-                            attributesMap[attrName] = new List<string>();
+                    AddUniqueValue(attributesMap, attr.Name.LocalName, attr.Value);
+                }
 
-                        if (!attributesMap[attrName].Contains(attrValue))
-                            attributesMap[attrName].Add(attrValue);
-                    }
+                // 2. Extract leaf child elements that hold text values directly
+                if (!element.HasElements && !string.IsNullOrWhiteSpace(element.Value))
+                {
+                    AddUniqueValue(attributesMap, element.Name.LocalName, element.Value);
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Помилка парсингу атрибутів: {ex.Message}");
-                return null;
-            }
-
-            // TEMP CODE
-            System.Diagnostics.Debug.WriteLine(String.Format("Full attributes : {0}",
-                new Func<string>(() => {
-                    StringBuilder a = new StringBuilder("");
-                    foreach(var x in attributesMap) a.Append($"[{x.Key} : {
-                        new Func<List<string>, string>((x) => {
-                            StringBuilder a = new StringBuilder("");
-                            foreach(var s in x) a.Append(s + " ");
-                            return a.ToString();
-                        })(x.Value)
-                    }] ");
-                    return a.ToString();
-                })()
-                ));
-
-            return attributesMap;
         }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Attribute parsing error: {ex.Message}");
+            return null;
+        }
+
+        return attributesMap.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value.OrderBy(v => v, StringComparer.OrdinalIgnoreCase).ToList(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static void AddUniqueValue(
+        Dictionary<string, HashSet<string>> map,
+        string key,
+        string rawValue)
+    {
+        string trimmed = rawValue.Trim();
+        if (string.IsNullOrEmpty(trimmed))
+            return;
+
+        if (!map.TryGetValue(key, out var values))
+        {
+            values = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            map[key] = values;
+        }
+
+        values.Add(trimmed);
     }
 }
