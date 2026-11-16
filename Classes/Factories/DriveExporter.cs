@@ -1,11 +1,13 @@
-﻿using liXMaiLips.Factories;
-using liXMaiLips.Services;
+﻿using liXMaiLips.Services;
 using liXMaiLips.Utils;
+
+namespace liXMaiLips.Factories;
 
 public abstract class DriveExporter
 {
-    protected GoogleDriveService _driveApi;
-    public DriveExporter(GoogleDriveService driveApi) { _driveApi = driveApi; }
+    protected readonly IGoogleDriveAPI _driveApi;
+
+    protected DriveExporter(IGoogleDriveAPI driveApi) { _driveApi = driveApi; }
 
     protected abstract IFileSaver CreateSaver();
 
@@ -44,12 +46,12 @@ public abstract class DriveExporter
 
 public class XmlDriveExporter : DriveExporter
 {
-    public XmlDriveExporter(GoogleDriveService driveApi) : base(driveApi) { }
+    public XmlDriveExporter(IGoogleDriveAPI driveApi) : base(driveApi) { }
     protected override IFileSaver CreateSaver() => new XmlFileSaver();
 }
 
 public class HtmlDriveExporter : DriveExporter
 {
-    public HtmlDriveExporter(GoogleDriveService driveApi) : base(driveApi) { }
+    public HtmlDriveExporter(IGoogleDriveAPI driveApi) : base(driveApi) { }
     protected override IFileSaver CreateSaver() => new HtmlFileSaver();
 }
