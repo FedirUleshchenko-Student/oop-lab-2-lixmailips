@@ -7,6 +7,12 @@ using liXMaiLips.Models;
 using liXMaiLips.Strategies;
 using liXMaiLips.UI;
 
+#if WINDOWS
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using WinRT.Interop;
+#endif
+
 namespace liXMaiLips.Pages;
 
 public partial class MainPage : ContentPage
@@ -417,7 +423,7 @@ public partial class MainPage : ContentPage
             ResultsListLayout.Children.Add(new Label
             {
                 Text = "За заданими параметрами нічого не знайдено.",
-                TextColor = Colors.Gray,
+                TextColor = Microsoft.Maui.Graphics.Colors.Gray,
                 Margin = new Thickness(10)
             });
             return;
@@ -434,7 +440,7 @@ public partial class MainPage : ContentPage
                 Padding = new Thickness(12),
                 BackgroundColor = Application.Current?.RequestedTheme == AppTheme.Dark
                     ? Color.FromArgb("#2C3034")
-                    : Colors.White,
+                    : Microsoft.Maui.Graphics.Colors.White,
                 StrokeShape = new RoundRectangle { CornerRadius = 6 }
             };
 
@@ -461,7 +467,7 @@ public partial class MainPage : ContentPage
                 {
                     Text = summaryText,
                     FontSize = 12,
-                    TextColor = Colors.Gray
+                    TextColor = Microsoft.Maui.Graphics.Colors.Gray
                 });
             }
 
@@ -492,4 +498,66 @@ public partial class MainPage : ContentPage
 
         LblFileInfo.Text = $"{xmlPart} | {xslPart}";
     }
+
+    private bool _isCloseHandlerAttached;
+    private bool _isCloseConfirmed;
+    private bool _isExitDialogOpen;
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        AttachWindowClosingHandler();
+    }
+
+    private void AttachWindowClosingHandler()
+    {
+        if (_isCloseHandlerAttached)
+            return;
+
+#if WINDOWS
+        if (Window?.Handler?.PlatformView is Microsoft.UI.Xaml.Window nativeWindow)
+        {
+            IntPtr windowHandle = WindowNative.GetWindowHandle(nativeWindow);
+            WindowId windowId = Win32Interop.GetWindowIdFromWindow(windowHandle);
+            AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
+
+            appWindow.Closing += OnAppWindowClosing;
+            _isCloseHandlerAttached = true;
+        }
+#endif
+    }
+
+#if WINDOWS
+    private async void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_isCloseConfirmed || _controller.CanCloseSafely())
+            return;
+
+        // Cancel immediate close to wait for asynchronous user confirmation
+        args.Cancel = true;
+
+        if (_isExitDialogOpen)
+            return;
+
+        _isExitDialogOpen = true;
+        try
+        {
+            bool shouldClose = await DisplayAlert(
+                "Незбережені зміни",
+                "У вас є незбережені зміни. Закрити програму?",
+                "Так",
+                "Ні");
+
+            if (shouldClose)
+            {
+                _isCloseConfirmed = true;
+                Application.Current?.Quit();
+            }
+        }
+        finally
+        {
+            _isExitDialogOpen = false;
+        }
+    }
+#endif
 }

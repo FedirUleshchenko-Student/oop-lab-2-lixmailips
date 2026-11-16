@@ -28,6 +28,13 @@ public class MainController
     //public List<XmlRecord>? SearchResults { get; private set; }
     #endregion
 
+    private bool _isLastActionXmlSave;
+
+    /// <summary>
+    /// Returns true if no XML file is open or if the last action was saving the XML file.
+    /// </summary>
+    public bool CanCloseSafely() => xmlFile == null || _isLastActionXmlSave;
+
     public async Task<bool> PrepareDriveFilesAsync(List<string> extensions)
     {
         if (await _driveApi.AuthenticateAsync())
@@ -101,6 +108,7 @@ public class MainController
 
         Logger.GetInstance().Log(LogType.FILTER,
             $"Фільтрація з доданими параметрами {newParams} [Стратегія = {strategyType}]. Знайдено: {searchResults.Count}");
+        _isLastActionXmlSave = false;
 
         return searchResults;
     }
@@ -113,6 +121,7 @@ public class MainController
 
         Logger.GetInstance().Log(LogType.FILTER,
             $"Фільтрація з прибраними параметрами {newParams} [Стратегія = {strategyType}]. Знайдено: {searchResults.Count}");
+        _isLastActionXmlSave = false;
 
         return searchResults;
     }
@@ -163,6 +172,7 @@ public class MainController
             if (saver.Save(htmlContent, fullPath))
             {
                 Logger.GetInstance().Log(LogType.SAVE, $"Збережено HTML файл: {fullPath}");
+                _isLastActionXmlSave = false;
                 return true;
             }
 
@@ -201,6 +211,7 @@ public class MainController
             if (saver.Save(filteredXml, fullPath))
             {
                 Logger.GetInstance().Log(LogType.SAVE, $"Збережено XML файл: {fullPath}");
+                _isLastActionXmlSave = true;
                 return true;
             }
 
@@ -222,7 +233,9 @@ public class MainController
             return false;
 
         CurrentSearchParams.Clear();
+
         Logger.GetInstance().Log(LogType.CLEAR, "Очищено параметри та вивід");
+        _isLastActionXmlSave = false;
         return true;
     }
 
@@ -233,7 +246,9 @@ public class MainController
             return false;
 
         xslFile = null;
+
         Logger.GetInstance().Log(LogType.CLEAR, "Очищено XSL шаблон");
+        _isLastActionXmlSave = false;
         return true;
     }
 
@@ -246,7 +261,9 @@ public class MainController
         xmlFile = null;
         CurrentAttributes = null;
         CurrentSearchParams.Clear();
+
         Logger.GetInstance().Log(LogType.CLEAR, "Закрито XML файл та очищено дані");
+        _isLastActionXmlSave = false;
         return true;
     }
     #endregion
@@ -274,6 +291,7 @@ public class MainController
             return false;
         }
 
+        _isLastActionXmlSave = false;
         if (content is XmlFileContent xml)
         {
             xmlFile = xml;
