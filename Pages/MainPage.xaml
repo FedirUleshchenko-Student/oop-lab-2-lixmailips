@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="liXMaiLips.Pages.MainPage"
-             Title="liXMaiLips">
+             Shell.NavBarIsVisible="False">
 
     <Grid ColumnDefinitions="320, *" ColumnSpacing="15" Padding="15">
 
@@ -29,7 +29,10 @@
             <!-- Block 3: Strategy and Reset -->
             <VerticalStackLayout Grid.Row="2" Spacing="4" BackgroundColor="{AppThemeBinding Light='#F8F9FA', Dark='#212529'}" Padding="6">
                 <Label Text="Тип стратегії:" FontSize="11" />
-                <Picker x:Name="StrategyPicker" Title="Оберіть стратегію (SAX / DOM / LINQ)" HeightRequest="36">
+                <Picker x:Name="StrategyPicker"
+                        HeightRequest="36"
+                        SelectedIndex="0"
+                        TextColor="{AppThemeBinding Light='#212529', Dark='White'}">
                     <Picker.ItemsSource>
                         <x:Array Type="{x:Type x:String}">
                             <x:String>LINQ to XML</x:String>
