@@ -160,9 +160,15 @@ public class MainController
                 if (_driveApi is GoogleDriveService GDS)
                 {
                     var exporter = new HtmlDriveExporter(GDS);
-                    return await exporter.ExportAsync(htmlContent, fileName);
+                    bool uploaded = await exporter.ExportAsync(htmlContent, fileName);
+                    if (uploaded)
+                    {
+                        Logger.GetInstance().Log(LogType.SAVE, $"Збережено HTML файл на Google Drive: {fileName}");
+                        _isLastActionXmlSave = false;
+                    }
+                    return uploaded;
                 }
-                else return false;
+                return false;
             }
 
             string documentsDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -199,9 +205,15 @@ public class MainController
                 if (_driveApi is GoogleDriveService GDS)
                 {
                     var exporter = new XmlDriveExporter(GDS);
-                    return await exporter.ExportAsync(filteredXml, fileName);
+                    bool uploaded = await exporter.ExportAsync(filteredXml, fileName);
+                    if (uploaded)
+                    {
+                        Logger.GetInstance().Log(LogType.SAVE, $"Збережено XML файл на Google Drive: {fileName}");
+                        _isLastActionXmlSave = true;
+                    }
+                    return uploaded;
                 }
-                else return false;
+                return false;
             }
 
             string documentsDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);

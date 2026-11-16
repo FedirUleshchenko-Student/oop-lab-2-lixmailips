@@ -28,49 +28,67 @@ public class LinqToXmlParseStrategy : IXmlParseStrategy
         if (el.Parent == null)
             return false;
 
-        // Leaf element with attributes or text (when parent is not already a flat record)
+        // Standalone leaf element only if its parent is not already a record container
         if (!el.HasElements)
-            return el.HasAttributes || (!string.IsNullOrWhiteSpace(el.Value) && el.Parent.Parent == null);
+            return el.Parent.Parent == null;
 
-        // Element whose children are purely simple leaf fields
-        return el.Elements().All(child => !child.HasElements && !child.HasAttributes);
+        // Record container whose children are all leaf elements (with text and/or attributes)
+        return el.Elements().All(child => !child.HasElements);
     }
 
     private static XmlRecord BuildRecord(XElement el)
     {
         var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        // Inherit ancestor grouping attributes (e.g., Faculty -> Department -> Record)
+        // Inherit ancestor grouping attributes
         foreach (var ancestor in el.Ancestors().Reverse())
         {
             foreach (var attr in ancestor.Attributes())
             {
                 if (!attr.IsNamespaceDeclaration && !string.IsNullOrWhiteSpace(attr.Value))
-                    fields[attr.Name.LocalName] = attr.Value.Trim();
+                    AppendFieldValue(fields, attr.Name.LocalName, attr.Value);
             }
         }
 
-        // Read attributes on the record element itself
+        // Attributes on the record element itself
         foreach (var attr in el.Attributes())
         {
             if (!attr.IsNamespaceDeclaration && !string.IsNullOrWhiteSpace(attr.Value))
-                fields[attr.Name.LocalName] = attr.Value.Trim();
+                AppendFieldValue(fields, attr.Name.LocalName, attr.Value);
         }
 
-        // Read leaf child elements or direct text value
+        // Leaf child elements (both text values and child attributes like scientificWork.title)
         if (el.HasElements)
         {
             foreach (var child in el.Elements())
             {
+                foreach (var attr in child.Attributes())
+                {
+                    if (!attr.IsNamespaceDeclaration && !string.IsNullOrWhiteSpace(attr.Value))
+                        AppendFieldValue(fields, $"{child.Name.LocalName}.{attr.Name.LocalName}", attr.Value);
+                }
+
                 if (!string.IsNullOrWhiteSpace(child.Value))
-                    fields[child.Name.LocalName] = child.Value.Trim();
+                    AppendFieldValue(fields, child.Name.LocalName, child.Value);
             }
         }
         else if (!el.HasAttributes && !string.IsNullOrWhiteSpace(el.Value))
         {
-            fields[el.Name.LocalName] = el.Value.Trim();
+            AppendFieldValue(fields, el.Name.LocalName, el.Value);
         }
 
         return new XmlRecord { Fields = fields };
+    }
+
+    private static void AppendFieldValue(Dictionary<string, string> fields, string key, string rawValue)
+    {
+        string trimmed = rawValue.Trim();
+        if (string.IsNullOrEmpty(trimmed))
+            return;
+
+        if (fields.TryGetValue(key, out var existing))
+            fields[key] = $"{existing}; {trimmed}";
+        else
+            fields[key] = trimmed;
     }
 }

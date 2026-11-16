@@ -33,8 +33,8 @@ public class DynamicSearchParams
     {
         foreach(var (key, values) in other.SelectedFilters)
         {
-            if(!SelectedFilters.TryGetValue(key, out var existingSet))
-                SelectedFilters.Add(key, new HashSet<string>());
+            if (!SelectedFilters.TryGetValue(key, out var existingSet))
+                SelectedFilters.Add(key, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 
             if (values == null) continue;
 

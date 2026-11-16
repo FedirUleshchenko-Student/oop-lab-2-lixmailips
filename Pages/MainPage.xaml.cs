@@ -383,6 +383,22 @@ public partial class MainPage : ContentPage
         }
     }
 
+    // Remove an entire parameter block and re-run search without its filter
+    private void OnRemoveParameterClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.CommandParameter is ParameterItem param)
+        {
+            if (ParametersList.Remove(param))
+            {
+                var delta = new DynamicSearchParams(param.Name);
+                var results = _controller.RemoveParamsAndSearch(delta, GetSelectedStrategy());
+
+                LogAction($"Removed parameter '{param.Name}' (found: {results.Count})");
+                RenderResults(results);
+            }
+        }
+    }
+
     // ==========================================
     // SEARCH EXECUTION & DYNAMIC UI RENDERING
     // ==========================================
@@ -455,18 +471,21 @@ public partial class MainPage : ContentPage
                 {
                     Text = summaryText,
                     FontSize = 12,
-                    TextColor = Microsoft.Maui.Graphics.Colors.Gray
+                    TextColor = Microsoft.Maui.Graphics.Colors.Gray,
+                    LineBreakMode = LineBreakMode.TailTruncation
                 });
             }
 
             card.Content = stack;
 
-            // Display all fields of the clicked record in the details panel
+            // Display all fields of the clicked record in the details panel (format multi-value fields as bullets)
             var tapGesture = new TapGestureRecognizer();
             tapGesture.Tapped += (s, e) =>
             {
-                LblSelectedDetails.Text = string.Join("\n",
-                    record.Fields.Select(kv => $"{kv.Key}: {kv.Value}"));
+                LblSelectedDetails.Text = string.Join("\n", record.Fields.Select(kv =>
+                    kv.Value.Contains("; ")
+                        ? $"{kv.Key}:\n  • {kv.Value.Replace("; ", "\n  • ")}"
+                        : $"{kv.Key}: {kv.Value}"));
             };
             card.GestureRecognizers.Add(tapGesture);
 

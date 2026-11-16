@@ -77,22 +77,45 @@
                                 <DataTemplate>
                                     <Border StrokeThickness="1.5" Stroke="#3B5BDB" Padding="8" Margin="0,0,0,5" BackgroundColor="{AppThemeBinding Light='White', Dark='#2C3034'}">
                                         <VerticalStackLayout Spacing="6">
-                                            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
-                                                <!-- Orange marker / parameter name -->
-                                                <Label Text="{Binding Name}" FontAttributes="Bold" VerticalOptions="Center" TextColor="{AppThemeBinding Light='#D9480F', Dark='#FF8787'}" />
+                                            <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="6">
+                                                <!-- Parameter name -->
+                                                <Label Text="{Binding Name}"
+                                                FontAttributes="Bold"
+                                                VerticalOptions="Center"
+                                                TextColor="{AppThemeBinding Light='#D9480F', Dark='#FF8787'}" />
 
-                                                <!-- Button to toggle input field for adding a new value -->
-                                                <Button Grid.Column="1" Text="+ Значення" FontSize="11" HeightRequest="30" Padding="8,0" Clicked="OnToggleAddValueClicked" CommandParameter="{Binding}" />
+                                                <!-- Toggle input / picker for adding a new value -->
+                                                <Button Grid.Column="1"
+                                                Text="+ Значення"
+                                                FontSize="11"
+                                                HeightRequest="30"
+                                                Padding="8,0"
+                                                Clicked="OnToggleAddValueClicked"
+                                                CommandParameter="{Binding}" />
+
+                                                <!-- Remove the entire parameter from search filters -->
+                                                <Button Grid.Column="2"
+                                                Text="✕"
+                                                FontSize="11"
+                                                WidthRequest="30"
+                                                HeightRequest="30"
+                                                Padding="0"
+                                                BackgroundColor="{AppThemeBinding Light='#FFE3E3', Dark='#4A2C2C'}"
+                                                TextColor="{AppThemeBinding Light='#C92A2A', Dark='#FFA8A8'}"
+                                                Clicked="OnRemoveParameterClicked"
+                                                CommandParameter="{Binding}" />
                                             </Grid>
 
                                             <!-- Yellow zone: values with tags and cross buttons -->
                                             <FlexLayout Wrap="Wrap" AlignItems="Center" JustifyContent="Start" BindableLayout.ItemsSource="{Binding Values}">
                                                 <BindableLayout.ItemTemplate>
                                                     <DataTemplate>
-                                                        <HorizontalStackLayout Spacing="4" Margin="3" BackgroundColor="{AppThemeBinding Light='#FFF9DB', Dark='#3B371E'}" Padding="6,3">
-                                                            <Label Text="{Binding}" VerticalOptions="Center" FontSize="13" />
-                                                            <Button Text="✕" FontSize="10" WidthRequest="24" HeightRequest="24" Padding="0" Clicked="OnRemoveParamValueClicked" CommandParameter="{Binding}" />
-                                                        </HorizontalStackLayout>
+                                                        <Border StrokeThickness="0" Margin="3" Padding="6,3" BackgroundColor="{AppThemeBinding Light='#FFF9DB', Dark='#3B371E'}">
+                                                            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                                                <Label Text="{Binding}" VerticalOptions="Center" FontSize="13" LineBreakMode="WordWrap" MaximumWidthRequest="420" />
+                                                                <Button Grid.Column="1" Text="✕" FontSize="10" WidthRequest="24" HeightRequest="24" Padding="0" VerticalOptions="Center" Clicked="OnRemoveParamValueClicked" CommandParameter="{Binding}" />
+                                                            </Grid>
+                                                        </Border>
                                                     </DataTemplate>
                                                 </BindableLayout.ItemTemplate>
                                             </FlexLayout>
@@ -124,7 +147,9 @@
             <Border Grid.Row="1" StrokeThickness="1" Stroke="#3B5bdb" Padding="12" BackgroundColor="{AppThemeBinding Light='White', Dark='#2C3034'}">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="ОБРАНИЙ РЕЗУЛЬТАТ ІЗ СПИСКУ НИЖЧЕ" FontAttributes="Bold" FontSize="12" TextColor="#3B5BDB" />
-                    <Label x:Name="LblSelectedDetails" Text="Тут вказана детальна інформація про нього, у форматі тому ж, що і вікно параметрів (тільки значення 1, а не багато)." FontSize="13" />
+                    <ScrollView MaximumHeightRequest="130">
+                        <Label x:Name="LblSelectedDetails" Text="Оберіть елемент зі списку нижче для детального перегляду." FontSize="13" />
+                    </ScrollView>
                 </VerticalStackLayout>
             </Border>
 

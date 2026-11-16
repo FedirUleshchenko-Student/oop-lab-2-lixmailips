@@ -20,17 +20,24 @@ public class AttributeExtractor
 
             foreach (var element in doc.Root.Descendants())
             {
-                // 1. Extract XML attributes on the element (excluding xmlns declarations)
+                bool isLeaf = !element.HasElements;
+                bool isRecordContainer = element.HasElements && element.Elements().All(c => !c.HasElements);
+
+                // Extract XML attributes (flatten leaf child attributes as "tagName.attrName")
                 foreach (var attr in element.Attributes())
                 {
                     if (attr.IsNamespaceDeclaration)
                         continue;
 
-                    AddUniqueValue(attributesMap, attr.Name.LocalName, attr.Value);
+                    string key = isLeaf && element.Parent != null && element.Parent != doc.Root
+                        ? $"{element.Name.LocalName}.{attr.Name.LocalName}"
+                        : attr.Name.LocalName;
+
+                    AddUniqueValue(attributesMap, key, attr.Value);
                 }
 
-                // 2. Extract leaf child elements that hold text values directly
-                if (!element.HasElements && !string.IsNullOrWhiteSpace(element.Value))
+                // Extract text value of leaf elements (e.g., fullName, faculty, scientificWork)
+                if (isLeaf && !isRecordContainer && !string.IsNullOrWhiteSpace(element.Value))
                 {
                     AddUniqueValue(attributesMap, element.Name.LocalName, element.Value);
                 }

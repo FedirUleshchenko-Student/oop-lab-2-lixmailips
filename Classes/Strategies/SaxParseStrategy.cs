@@ -67,7 +67,7 @@ public class SaxParseStrategy : IXmlParseStrategy
                 case XmlNodeType.CDATA:
                     {
                         if (stack.Count > 0 && !string.IsNullOrWhiteSpace(reader.Value))
-                            stack.Peek().TextContent += reader.Value.Trim();
+                            stack.Peek().TextContent += reader.Value;
                         break;
                     }
 
@@ -96,18 +96,22 @@ public class SaxParseStrategy : IXmlParseStrategy
 
         var parent = stack.Peek();
 
-        // Check if current element is a simple leaf field (no children, no attributes)
-        if (!current.HasChildElements && current.Attributes.Count == 0 && stack.Count > 1)
+        // Treat any element without child elements (below root level) as a leaf field of its parent
+        if (!current.HasChildElements && stack.Count > 1)
         {
+            foreach (var (k, v) in current.Attributes)
+                AppendFieldValue(parent.LeafChildren, $"{current.Name}.{k}", v);
+
             if (!string.IsNullOrWhiteSpace(current.TextContent))
-                parent.LeafChildren[current.Name] = current.TextContent;
+                AppendFieldValue(parent.LeafChildren, current.Name, current.TextContent);
+
             return;
         }
 
         // Otherwise current is either a record or a grouping container
         parent.HasComplexChildren = true;
 
-        bool isRecord = (!current.HasChildElements && (current.Attributes.Count > 0 || stack.Count == 1))
+        bool isRecord = (!current.HasChildElements && stack.Count == 1)
                         || (current.HasChildElements && !current.HasComplexChildren);
 
         if (!isRecord)
@@ -119,20 +123,32 @@ public class SaxParseStrategy : IXmlParseStrategy
         foreach (var ancestor in stack.Reverse())
         {
             foreach (var (k, v) in ancestor.Attributes)
-                fields[k] = v;
+                AppendFieldValue(fields, k, v);
         }
 
         foreach (var (k, v) in current.Attributes)
-            fields[k] = v;
+            AppendFieldValue(fields, k, v);
 
         foreach (var (k, v) in current.LeafChildren)
-            fields[k] = v;
+            AppendFieldValue(fields, k, v);
 
         if (!current.HasChildElements && current.Attributes.Count == 0 && !string.IsNullOrWhiteSpace(current.TextContent))
-            fields[current.Name] = current.TextContent;
+            AppendFieldValue(fields, current.Name, current.TextContent);
 
         var record = new XmlRecord { Fields = fields };
         if (record.Fields.Count > 0 && XmlFilterMatcher.Matches(record, parameters))
             results.Add(record);
+    }
+
+    private static void AppendFieldValue(Dictionary<string, string> fields, string key, string rawValue)
+    {
+        string trimmed = rawValue.Trim();
+        if (string.IsNullOrEmpty(trimmed))
+            return;
+
+        if (fields.TryGetValue(key, out var existing))
+            fields[key] = $"{existing}; {trimmed}";
+        else
+            fields[key] = trimmed;
     }
 }

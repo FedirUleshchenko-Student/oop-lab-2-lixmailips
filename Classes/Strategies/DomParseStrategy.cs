@@ -35,27 +35,38 @@ public class DomParseStrategy : IXmlParseStrategy
         {
             var fields = new Dictionary<string, string>(inheritedAttributes, StringComparer.OrdinalIgnoreCase);
 
+            // Read attributes on the record element itself
             if (element.Attributes != null)
             {
                 foreach (XmlAttribute attr in element.Attributes)
                 {
                     if (!attr.Name.StartsWith("xmlns") && !string.IsNullOrWhiteSpace(attr.Value))
-                        fields[attr.LocalName] = attr.Value.Trim();
+                        AppendFieldValue(fields, attr.LocalName, attr.Value);
                 }
             }
 
+            // Read leaf child elements (both child attributes and text values)
             if (childElements.Count > 0)
             {
                 foreach (var child in childElements)
                 {
+                    if (child.Attributes != null)
+                    {
+                        foreach (XmlAttribute attr in child.Attributes)
+                        {
+                            if (!attr.Name.StartsWith("xmlns") && !string.IsNullOrWhiteSpace(attr.Value))
+                                AppendFieldValue(fields, $"{child.LocalName}.{attr.LocalName}", attr.Value);
+                        }
+                    }
+
                     if (!string.IsNullOrWhiteSpace(child.InnerText))
-                        fields[child.LocalName] = child.InnerText.Trim();
+                        AppendFieldValue(fields, child.LocalName, child.InnerText);
                 }
             }
             else if ((element.Attributes == null || element.Attributes.Count == 0) &&
                      !string.IsNullOrWhiteSpace(element.InnerText))
             {
-                fields[element.LocalName] = element.InnerText.Trim();
+                AppendFieldValue(fields, element.LocalName, element.InnerText);
             }
 
             var record = new XmlRecord { Fields = fields };
@@ -72,7 +83,7 @@ public class DomParseStrategy : IXmlParseStrategy
             foreach (XmlAttribute attr in element.Attributes)
             {
                 if (!attr.Name.StartsWith("xmlns") && !string.IsNullOrWhiteSpace(attr.Value))
-                    nextInherited[attr.LocalName] = attr.Value.Trim();
+                    AppendFieldValue(nextInherited, attr.LocalName, attr.Value);
             }
         }
 
@@ -84,13 +95,21 @@ public class DomParseStrategy : IXmlParseStrategy
 
     private static bool IsLeafRecord(XmlElement element, List<XmlElement> childElements)
     {
-        bool hasAttrs = element.Attributes != null && element.Attributes.Count > 0;
-
         if (childElements.Count == 0)
-            return hasAttrs || (!string.IsNullOrWhiteSpace(element.InnerText) && element.ParentNode?.ParentNode is XmlDocument);
+            return element.ParentNode?.ParentNode is XmlDocument;
 
-        return childElements.All(c =>
-            !c.ChildNodes.OfType<XmlElement>().Any() &&
-            (c.Attributes == null || c.Attributes.Count == 0));
+        return childElements.All(c => !c.ChildNodes.OfType<XmlElement>().Any());
+    }
+
+    private static void AppendFieldValue(Dictionary<string, string> fields, string key, string rawValue)
+    {
+        string trimmed = rawValue.Trim();
+        if (string.IsNullOrEmpty(trimmed))
+            return;
+
+        if (fields.TryGetValue(key, out var existing))
+            fields[key] = $"{existing}; {trimmed}";
+        else
+            fields[key] = trimmed;
     }
 }

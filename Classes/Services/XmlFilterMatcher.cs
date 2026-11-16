@@ -17,10 +17,18 @@ internal static class XmlFilterMatcher
                 return false;
             }
 
-            // If specific values are selected, require an exact case-insensitive match (OR within parameter)
-            if (allowedValues != null && allowedValues.Count > 0 && !allowedValues.Contains(actualValue))
+            // If specific values are selected, match against any semicolon-separated item (OR within parameter)
+            if (allowedValues != null && allowedValues.Count > 0)
             {
-                return false;
+                var recordValues = actualValue.Split(
+                    "; ",
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                bool hasMatch = recordValues.Any(rv =>
+                    allowedValues.Any(av => string.Equals(av, rv, StringComparison.OrdinalIgnoreCase)));
+
+                if (!hasMatch)
+                    return false;
             }
         }
 

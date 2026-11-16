@@ -3,19 +3,14 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Xsl;
 using liXMaiLips.Models;
-using liXMaiLips.Strategies;
 
 namespace liXMaiLips.Services;
 
 public class XmlTransformationService
 {
-    private sealed class Utf8StringWriter : StringWriter
-    {
-        public override Encoding Encoding => Encoding.UTF8;
-    }
-
     /// <summary>
-    /// Filters the source XML document according to active search parameters while preserving element hierarchy.
+    /// Filters the source XML according to active search parameters while preserving
+    /// the original XML structure, attributes, and nested elements of matching records.
     /// </summary>
     public string BuildFilteredXml(string xmlContent, DynamicSearchParams? parameters)
     {
@@ -26,40 +21,35 @@ public class XmlTransformationService
         if (doc.Root == null)
             return xmlContent;
 
+        // Track non-record container elements before removal to prune empty groups afterward
+        var groupingContainers = doc.Root
+            .Descendants()
+            .Where(el => el.HasElements && !IsLeafRecordElement(el))
+            .Reverse()
+            .ToList();
+
         var recordElements = doc.Root
             .Descendants()
             .Where(IsLeafRecordElement)
             .ToList();
 
-        var toRemove = new List<XElement>();
         foreach (var el in recordElements)
         {
             var record = BuildRecord(el);
             if (record.Fields.Count == 0 || !XmlFilterMatcher.Matches(record, parameters))
-                toRemove.Add(el);
+            {
+                el.Remove();
+            }
         }
 
-        foreach (var el in toRemove)
+        // Remove grouping containers that became empty after filtering
+        foreach (var container in groupingContainers)
         {
-            el.Remove();
-        }
-
-        // Remove empty grouping containers that no longer hold any records
-        bool removedEmpty;
-        do
-        {
-            removedEmpty = false;
-            var emptyContainers = doc.Root
-                .Descendants()
-                .Where(e => !e.HasElements && !e.HasAttributes && string.IsNullOrWhiteSpace(e.Value))
-                .ToList();
-
-            foreach (var container in emptyContainers)
+            if (container.Parent != null && !container.HasElements)
             {
                 container.Remove();
-                removedEmpty = true;
             }
-        } while (removedEmpty);
+        }
 
         return doc.Declaration != null
             ? $"{doc.Declaration}{Environment.NewLine}{doc}"
@@ -73,18 +63,27 @@ public class XmlTransformationService
     {
         var xslt = new XslCompiledTransform();
 
-        using var xslStringReader = new StringReader(xslContent);
-        using var xslXmlReader = XmlReader.Create(xslStringReader);
-        xslt.Load(xslXmlReader, XsltSettings.Default, new XmlUrlResolver());
+        using (var xslStringReader = new StringReader(xslContent))
+        using (var xslXmlReader = XmlReader.Create(xslStringReader))
+        {
+            xslt.Load(xslXmlReader);
+        }
 
-        using var xmlStringReader = new StringReader(xmlContent);
-        using var xmlReader = XmlReader.Create(xmlStringReader);
+        var sb = new StringBuilder();
+        var writerSettings = xslt.OutputSettings?.Clone() ?? new XmlWriterSettings
+        {
+            Indent = true,
+            ConformanceLevel = ConformanceLevel.Auto
+        };
 
-        using var htmlWriter = new Utf8StringWriter();
-        using var xmlOutputWriter = XmlWriter.Create(htmlWriter, xslt.OutputSettings);
+        using (var xmlStringReader = new StringReader(xmlContent))
+        using (var xmlReader = XmlReader.Create(xmlStringReader))
+        using (var htmlWriter = XmlWriter.Create(sb, writerSettings))
+        {
+            xslt.Transform(xmlReader, htmlWriter);
+        }
 
-        xslt.Transform(xmlReader, xmlOutputWriter);
-        return htmlWriter.ToString();
+        return sb.ToString();
     }
 
     private static bool IsLeafRecordElement(XElement el)
@@ -93,43 +92,64 @@ public class XmlTransformationService
             return false;
 
         if (!el.HasElements)
-            return el.HasAttributes || (!string.IsNullOrWhiteSpace(el.Value) && el.Parent.Parent == null);
+            return el.Parent.Parent == null;
 
-        return el.Elements().All(child => !child.HasElements && !child.HasAttributes);
+        return el.Elements().All(child => !child.HasElements);
     }
 
     private static XmlRecord BuildRecord(XElement el)
     {
         var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        // Inherit ancestor grouping attributes
         foreach (var ancestor in el.Ancestors().Reverse())
         {
             foreach (var attr in ancestor.Attributes())
             {
                 if (!attr.IsNamespaceDeclaration && !string.IsNullOrWhiteSpace(attr.Value))
-                    fields[attr.Name.LocalName] = attr.Value.Trim();
+                    AppendFieldValue(fields, attr.Name.LocalName, attr.Value);
             }
         }
 
+        // Attributes on the record element itself
         foreach (var attr in el.Attributes())
         {
             if (!attr.IsNamespaceDeclaration && !string.IsNullOrWhiteSpace(attr.Value))
-                fields[attr.Name.LocalName] = attr.Value.Trim();
+                AppendFieldValue(fields, attr.Name.LocalName, attr.Value);
         }
 
+        // Leaf child elements (both child attributes like scientificWork.title and text values)
         if (el.HasElements)
         {
             foreach (var child in el.Elements())
             {
+                foreach (var attr in child.Attributes())
+                {
+                    if (!attr.IsNamespaceDeclaration && !string.IsNullOrWhiteSpace(attr.Value))
+                        AppendFieldValue(fields, $"{child.Name.LocalName}.{attr.Name.LocalName}", attr.Value);
+                }
+
                 if (!string.IsNullOrWhiteSpace(child.Value))
-                    fields[child.Name.LocalName] = child.Value.Trim();
+                    AppendFieldValue(fields, child.Name.LocalName, child.Value);
             }
         }
         else if (!el.HasAttributes && !string.IsNullOrWhiteSpace(el.Value))
         {
-            fields[el.Name.LocalName] = el.Value.Trim();
+            AppendFieldValue(fields, el.Name.LocalName, el.Value);
         }
 
         return new XmlRecord { Fields = fields };
+    }
+
+    private static void AppendFieldValue(Dictionary<string, string> fields, string key, string rawValue)
+    {
+        string trimmed = rawValue.Trim();
+        if (string.IsNullOrEmpty(trimmed))
+            return;
+
+        if (fields.TryGetValue(key, out var existing))
+            fields[key] = $"{existing}; {trimmed}";
+        else
+            fields[key] = trimmed;
     }
 }
