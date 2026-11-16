@@ -112,18 +112,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private async void OnChooseTranslateClicked(object sender, EventArgs e)
-    {
-        LogAction("Selected translation file (translate)");
-        await DisplayAlert("Локалізація", "Підключення словника перекладу атрибутів.", "ОК");
-    }
-
-    private async void OnAutoTranslateClicked(object sender, EventArgs e)
-    {
-        LogAction("Auto-detection of localization/translation");
-        await DisplayAlert("Локалізація", "Автоматичний переклад назв атрибутів застосовано.", "ОК");
-    }
-
     private void OnCloseFileClicked(object sender, EventArgs e)
     {
         if (_controller.ClearXmlData())
@@ -131,7 +119,7 @@ public partial class MainPage : ContentPage
             ParametersList.Clear();
             ResultsListLayout.Children.Clear();
             UpdateFileInfoLabel();
-            LblFileInfo.Text = "Короткий опис файлу: не обрано";
+            //LblFileInfo.Text = "Короткий опис файлу: не обрано";
             LblSelectedDetails.Text = "Тут вказана детальна інформація про нього...";
             LogAction("Closed XML file and cleared workspace");
         }
@@ -203,7 +191,7 @@ public partial class MainPage : ContentPage
         if (success)
         {
             LogAction($"Transformed to HTML: {fileName} ({target})");
-            await DisplayAlert("Успіх", $"Файл {fileName} успішно створено!", "ОК");
+            await DisplayAlert("Успіх", $"Файл {fileName} успішно створено в Документах!", "ОК");
         }
         else
         {
@@ -237,7 +225,7 @@ public partial class MainPage : ContentPage
         if (success)
         {
             LogAction($"Saved XML: {fileName} ({target})");
-            await DisplayAlert("Успіх", $"Файл {fileName} успішно збережено!", "ОК");
+            await DisplayAlert("Успіх", $"Файл {fileName} успішно збережено в Документах!", "ОК");
         }
         else
         {
@@ -496,7 +484,7 @@ public partial class MainPage : ContentPage
             ? $"XSL: {_controller.xslFile.Properties.Value.Name}"
             : "XSL: не обрано";
 
-        LblFileInfo.Text = $"{xmlPart} | {xslPart}";
+        LblFileInfo.Text = $"{xmlPart}\n{xslPart}";
     }
 
     private bool _isCloseHandlerAttached;

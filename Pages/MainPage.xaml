@@ -14,10 +14,6 @@
             <!-- Block 1: XML and File -->
             <VerticalStackLayout Grid.Row="0" Spacing="4" BackgroundColor="{AppThemeBinding Light='#F8F9FA', Dark='#212529'}" Padding="6">
                 <Button x:Name="BtnChooseXml" Text="Обрати XML" Clicked="OnChooseXmlClicked" HeightRequest="36" />
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="5">
-                    <Button Grid.Column="0" Text="Обрати translate" Clicked="OnChooseTranslateClicked" HeightRequest="36" />
-                    <Button Grid.Column="1" Text="Auto" Clicked="OnAutoTranslateClicked" WidthRequest="60" HeightRequest="36" />
-                </Grid>
                 <Label x:Name="LblFileInfo" Text="Короткий опис файлу: не обрано" FontSize="11" TextColor="Gray" />
                 <Button x:Name="BtnCloseFile" Text="Закрити файл (очистити)" Clicked="OnCloseFileClicked" HeightRequest="36" BackgroundColor="{AppThemeBinding Light='#FFE3E3', Dark='#4A2C2C'}" TextColor="{AppThemeBinding Light='#C92A2A', Dark='#FFA8A8'}" />
             </VerticalStackLayout>
